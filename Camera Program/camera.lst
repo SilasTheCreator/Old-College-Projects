@@ -1,0 +1,581 @@
+Microsoft (R) Macro Assembler Version 6.15.8803		    04/14/21 23:27:14
+camera.asm						     Page 1 - 1
+
+
+				;Carli Williams
+				;3410-002
+				;Assignment 1
+
+				.386
+
+				.MODEL FLAT
+
+				ExitProcess PROTO NEAR32 stdcall, dwExitCode:DWORD
+
+				INCLUDE debug.h
+			      C INCLUDE io.h
+			      C ; IO.H -- header file for I/O macros
+			      C ; 32-bit version for flat memory model
+			      C ; R. Detmer   last revised 8/2000
+			      C .NOLIST     ; turn off listing
+			      C .LIST        ; begin listing
+			      C 
+			      C 
+ = 0000000D		      C CR          EQU    0Dh   ; carriage return character
+ = 0000000A		      C LF          EQU    0Ah   ; linefeed character
+			      C 
+ 00000000		      C .DATA
+ 00000000 0D 0A 00	      C carriage    BYTE     CR, LF, 0
+ 00000003  0000000D [	      C text        BYTE     13 DUP(?)
+	    00
+	   ]
+			      C 
+			      C outputW    	MACRO   var
+			      C                    itoa text, var
+			      C                    output text
+			      C                    output carriage
+			      C                 ENDM
+			      C 
+			      C outputD  	MACRO  var
+			      C                    dtoa text, var
+			      C                    output text
+			      C                    output carriage
+			      C          	ENDM
+			      C 
+			      C inputW          MACRO  prompt, location
+			      C                    output prompt
+			      C                    input text, 8
+			      C                    atoi text
+			      C                    mov location, ax
+			      C                 ENDM
+			      C 
+			      C inputD          MACRO  prompt, location
+			      C                    output prompt
+			      C                    input text, 13
+			      C                    atod text
+			      C                    mov location, eax
+			      C                 ENDM
+			      C 
+				INCLUDE io.h
+			      C ; IO.H -- header file for I/O macros
+			      C ; 32-bit version for flat memory model
+			      C ; R. Detmer   last revised 8/2000
+			      C .NOLIST     ; turn off listing
+			      C .LIST        ; begin listing
+			      C 
+				INCLUDE sqrt.h
+			      C .NOLIST     ; turn off listing
+			      C .LIST       
+			      C 
+
+				.STACK  4096           
+
+ 00000010			.DATA                   
+
+				; declare these first so that they are all on WORD boundaries
+				; Most of the variables I used, but some are just exist.
+
+ 00000010 0000			eye_x       WORD    ?
+ 00000012 0000			eye_y       WORD    ?
+ 00000014 0000			eye_z       WORD    ?
+ 00000016 0000			at_x        WORD    ?
+ 00000018 0000			at_y        WORD    ?
+ 0000001A 0000			at_z        WORD    ?
+ 0000001C 0000			up_x        WORD    ?
+ 0000001E 0000			up_y        WORD    ?
+ 00000020 0000			up_z        WORD    ?
+ 00000022 0000			n_x         WORD    ?
+ 00000024 0000			n_y         WORD    ?
+ 00000026 0000			n_z         WORD    ?
+ 00000028 0000			v_x         WORD    ?
+ 0000002A 0000			v_y         WORD    ?
+ 0000002C 0000			v_z         WORD    ?
+ 0000002E 0000			u_x         WORD    ?
+ 00000030 0000			u_y         WORD    ?
+ 00000032 0000			u_z         WORD    ?
+
+ 00000034 45 6E 74 65 72	eyexprompt      BYTE    "Enter the x-coordinate of the camera eyepoint:  ", 0
+	   20 74 68 65 20
+	   78 2D 63 6F 6F
+	   72 64 69 6E 61
+	   74 65 20 6F 66
+	   20 74 68 65 20
+	   63 61 6D 65 72
+	   61 20 65 79 65
+	   70 6F 69 6E 74
+	   3A 20 20 00
+ 00000065 45 6E 74 65 72	eyeyprompt      BYTE    "Enter the y-coordinate of the camera eyepoint:  ", 0
+	   20 74 68 65 20
+	   79 2D 63 6F 6F
+	   72 64 69 6E 61
+	   74 65 20 6F 66
+	   20 74 68 65 20
+	   63 61 6D 65 72
+	   61 20 65 79 65
+	   70 6F 69 6E 74
+	   3A 20 20 00
+ 00000096 45 6E 74 65 72	eyezprompt      BYTE    "Enter the z-coordinate of the camera eyepoint:  ", 0
+	   20 74 68 65 20
+	   7A 2D 63 6F 6F
+	   72 64 69 6E 61
+	   74 65 20 6F 66
+	   20 74 68 65 20
+	   63 61 6D 65 72
+	   61 20 65 79 65
+	   70 6F 69 6E 74
+	   3A 20 20 00
+
+ 000000C7 45 6E 74 65 72	atxprompt       BYTE    "Enter the x-coordinate of the camera look at point:  ", 0
+	   20 74 68 65 20
+	   78 2D 63 6F 6F
+	   72 64 69 6E 61
+	   74 65 20 6F 66
+	   20 74 68 65 20
+	   63 61 6D 65 72
+	   61 20 6C 6F 6F
+	   6B 20 61 74 20
+	   70 6F 69 6E 74
+	   3A 20 20 00
+ 000000FD 45 6E 74 65 72	atyprompt       BYTE    "Enter the y-coordinate of the camera look at point:  ", 0
+	   20 74 68 65 20
+	   79 2D 63 6F 6F
+	   72 64 69 6E 61
+	   74 65 20 6F 66
+	   20 74 68 65 20
+	   63 61 6D 65 72
+	   61 20 6C 6F 6F
+	   6B 20 61 74 20
+	   70 6F 69 6E 74
+	   3A 20 20 00
+ 00000133 45 6E 74 65 72	atzprompt       BYTE    "Enter the z-coordinate of the camera look at point:  ", 0
+	   20 74 68 65 20
+	   7A 2D 63 6F 6F
+	   72 64 69 6E 61
+	   74 65 20 6F 66
+	   20 74 68 65 20
+	   63 61 6D 65 72
+	   61 20 6C 6F 6F
+	   6B 20 61 74 20
+	   70 6F 69 6E 74
+	   3A 20 20 00
+
+ 00000169 45 6E 74 65 72	upxprompt       BYTE    "Enter the x-coordinate of the camera up direction:  ", 0
+	   20 74 68 65 20
+	   78 2D 63 6F 6F
+	   72 64 69 6E 61
+	   74 65 20 6F 66
+	   20 74 68 65 20
+	   63 61 6D 65 72
+	   61 20 75 70 20
+	   64 69 72 65 63
+	   74 69 6F 6E 3A
+	   20 20 00
+ 0000019E 45 6E 74 65 72	upyprompt       BYTE    "Enter the y-coordinate of the camera up direction:  ", 0
+	   20 74 68 65 20
+	   79 2D 63 6F 6F
+	   72 64 69 6E 61
+	   74 65 20 6F 66
+	   20 74 68 65 20
+	   63 61 6D 65 72
+	   61 20 75 70 20
+	   64 69 72 65 63
+	   74 69 6F 6E 3A
+	   20 20 00
+ 000001D3 45 6E 74 65 72	upzprompt       BYTE    "Enter the z-coordinate of the camera up direction:  ", 0
+	   20 74 68 65 20
+	   7A 2D 63 6F 6F
+	   72 64 69 6E 61
+	   74 65 20 6F 66
+	   20 74 68 65 20
+	   63 61 6D 65 72
+	   61 20 75 70 20
+	   64 69 72 65 63
+	   74 69 6F 6E 3A
+	   20 20 00
+
+ 00000208  00000032 [		display         		BYTE    50 DUP (?), 0 ; the text to display in (x, y, z) format
+	    00
+	   ] 00
+ 0000023B 75 3A 20 00		output_u        	BYTE    "u: ", 0
+ 0000023F 76 3A 20 00		output_v        	BYTE    "v: ", 0
+ 00000243 6E 3A 20 00		output_n        	BYTE    "n: ", 0
+
+ 00000247 0D 0A 00		eol             		BYTE    CR, LF, 0     ; end of line
+
+ 0000024A 0000			ndotn            WORD   ?
+ 0000024C 0000			vupn             WORD   ?
+ 0000024E 0000			length_n         WORD   ?
+ 00000250 0000			length_u         WORD   ?
+ 00000252 0000			length_v         WORD   ?
+
+
+ 00000000			.CODE          
+
+				;Display macros
+				getCoord    MACRO   prompt, var
+				               inputW  prompt, var
+				               mov     var, ax         ; store the result in memory
+				               outputW ax
+				            ENDM
+
+
+				get_and_display MACRO prompt1, prompt2, prompt3, prompt4, x1, x2, x3
+				                  getCoord prompt1, x1
+								  getCoord prompt2, x2
+								  getCoord prompt3, x3
+								  printPoint prompt4, x1, x2, x3  
+				                ENDM                            
+
+
+				printPoint  MACRO   point, xvar, yvar, zvar
+				               output eol
+				               mov     point, "("
+				               itoa    point + 1, xvar ; convert xvar to digits and place after the "("
+				               mov     point + 7, ","  ; insert the comma after the digits for xvar
+							   itoa    point + 8, yvar
+							   mov     point + 14, ","
+							   itoa    point + 15, zvar
+							   mov     point + 21, ")"
+							   output point
+							   output eol
+				            ENDM
+
+				printNormPoint  MACRO   point, xvar, yvar, zvar, len
+				               itoa point + 5, len
+				               itoa point + 16, len
+				               itoa point + 27, len
+
+				               output eol
+				               mov     point + 0, "("
+
+				               itoa    point + 1, xvar  
+				               mov     point + 7, "/"  
+				               mov     point + 11, ","
+							   itoa    point + 12, yvar
+							   mov     point + 18, "/"
+							   mov     point + 22, ","
+							   itoa    point + 23, zvar
+							   mov     point + 29, "/"
+							   mov     point + 33, ")"
+
+				               output  point
+				               output  eol
+				            ENDM
+
+				; computes the dot product of two vectors
+				dot_product MACRO   x1, y1, z1, x2, y2, z2
+				               mov ax, x1
+				               mov bx, x2
+				               imul bx        ; x1 * x2 is in ax  (actually dx::ax, high order bits dropped)
+				               mov cx, ax     ; the accumulating result will be in cx
+							   mov ax, y1
+							   mov bx, y2
+							   imul bx
+							   add cx, ax
+							   mov ax, z1
+							   mov bx, z2
+							   imul bx
+							   add cx, ax
+				            ENDM
+
+				; computes the cross product of two vectors
+				cross_product MACRO   x1, y1, z1, x2, y2, z2, x3, y3, z3
+				               mov ax, y1
+				               mov bx, z2
+				               mul bx         ; result in dx::ax
+				               mov cx, ax
+
+				               mov ax, z1     
+				               mov bx, y2
+				               mul bx         ; result in dx::ax
+				               neg ax
+
+				               add ax, cx
+				               mov x3, ax
+							   
+							   mov ax, z1
+							   mov bx, x2
+							   mul bx
+							   mov cx, ax
+							   
+							   mov ax, x1
+							   mov bx, z2
+							   mul bx
+							   neg ax
+							   
+							   add ax, cx
+							   mov y3, ax
+							   
+							   mov ax, x1
+							   mov bx, y2
+							   mul bx
+							   mov cx, ax
+							   
+							   mov ax, y1
+							   mov bx, x2
+							   mul bx
+							   neg ax
+							   
+							   add ax, cx
+							   mov z3, ax
+							   
+				            ENDM
+
+				; performs point-point subtraction to obtain a vector
+				point_subtract MACRO x1, y1, z1, x2, y2, z2, vx, vy, vz
+				                  mov ax, x1
+				                  mov bx, x2
+				                  sub ax, bx
+				                  mov vx, ax
+								  
+								  mov ax, y1
+								  mov bx, y2
+								  sub ax, bx
+								  mov vy, ax
+								  
+								  mov ax, z1
+								  mov bx, z2
+								  sub ax, bx
+								  mov vz, ax
+
+				               ENDM
+
+				; performs point-vector addition to obtain a new point
+				point_vector_add MACRO x, y, z, vx, vy, vz, xn, yn, zn
+				                  mov ax, x
+				                  mov bx, vx
+				                  add ax, bx
+				                  mov xn, ax
+								  
+								  mov ax, y
+								  mov bx, vy
+								  add ax, bx
+								  mov yn, ax
+								  
+								  mov ax, z
+								  mov bx, vz
+								  add ax, bx
+								  mov zn, ax
+								  ENDM
+
+
+								  
+								  
+				vector_length	MACRO x, y, z
+				                  dot_product x, y, z, x, y, z
+								  sqrt cx
+								   
+				                ENDM
+
+
+
+
+
+
+ 00000000			_start:
+ 00000000
+				          get_and_display eyexprompt, eyeyprompt, eyezprompt, display, eye_x, eye_y, eye_z
+						  get_and_display atxprompt, atyprompt, atzprompt, display, at_x, at_y, at_z
+						  get_and_display upxprompt, upyprompt, upzprompt, display, up_x, up_y, up_z
+				 
+
+
+				          point_subtract eye_x, eye_y, eye_z, at_x, at_y, at_z, n_x, n_y, n_z
+
+				          dot_product n_x, n_y, n_z, n_x, n_y, n_z
+ 000005DF  66| 89 0D				  mov ndotn, cx
+	   0000024A R
+						  dot_product n_x, n_y, n_z, up_x, up_y, up_z
+ 0000061F  66| 89 0D				  mov  vupn, cx
+	   0000024C R
+
+ 00000626  66| A1		          mov ax, ndotn
+	   0000024A R
+ 0000062C  66| 8B 1D				  mov bx, up_x
+	   0000001C R
+ 00000633  66| F7 E3				  mul bx
+ 00000636  66| 8B C8				  mov cx, ax
+ 00000639  66| A1				  mov ax, vupn
+	   0000024C R
+ 0000063F  66| 8B 1D				  mov bx, n_x
+	   00000022 R
+ 00000646  66| F7 D8				  neg ax
+ 00000649  66| F7 E3				  mul bx
+ 0000064C  66| 03 C1				  add ax, cx
+ 0000064F  66| A3				  mov v_x, ax
+	   00000028 R
+						  
+ 00000655  66| A1				  mov ax, ndotn
+	   0000024A R
+ 0000065B  66| 8B 1D				  mov bx, up_y
+	   0000001E R
+ 00000662  66| F7 E3				  mul bx
+ 00000665  66| 8B C8				  mov cx, ax
+ 00000668  66| A1				  mov ax, vupn
+	   0000024C R
+ 0000066E  66| 8B 1D				  mov bx, n_y
+	   00000024 R
+ 00000675  66| F7 D8				  neg ax
+ 00000678  66| F7 E3				  mul bx
+ 0000067B  66| 03 C1				  add ax, cx
+ 0000067E  66| A3				  mov v_y, ax
+	   0000002A R
+						  
+ 00000684  66| A1				  mov ax, ndotn
+	   0000024A R
+ 0000068A  66| 8B 1D				  mov bx, up_z
+	   00000020 R
+ 00000691  66| F7 E3				  mul bx
+ 00000694  66| 8B C8				  mov cx, ax
+ 00000697  66| A1				  mov ax, vupn
+	   0000024C R
+ 0000069D  66| 8B 1D				  mov bx, n_z
+	   00000026 R
+ 000006A4  66| F7 D8				  neg ax
+ 000006A7  66| F7 E3				  mul bx
+ 000006AA  66| 03 C1				  add ax, cx
+ 000006AD  66| A3				  mov v_z, ax
+	   0000002C R
+						  
+				          cross_product v_x, v_y, v_z, n_x, n_y, n_z, u_x, u_y, u_z
+						  vector_length u_x, u_y, u_z
+ 00000780  66| A3				  mov length_u, ax
+	   00000250 R
+						  vector_length v_x, v_y, v_z
+ 000007C6  66| A3				  mov length_v, ax
+	   00000252 R
+						  vector_length n_x, n_y, n_z
+ 0000080C  66| A3				  mov length_n, ax
+	   0000024E R
+						  
+				          output eol
+				          output eol
+				          output output_u
+				          printNormPoint display, u_x, u_y, u_z, length_u
+						  output output_v
+						  printNormPoint display, v_x, v_y, v_z, length_v
+						  output output_n
+				          printNormPoint display, n_x, n_y, n_z, length_n
+
+
+
+				        INVOKE  ExitProcess, 0  ; exit with return code 0
+
+ 00000B0E			PUBLIC _start                   ; make entry point public
+
+				END                             ; end of source code
+Microsoft (R) Macro Assembler Version 6.15.8803		    04/14/21 23:27:14
+camera.asm						     Symbols 2 - 1
+
+
+
+
+Macros:
+
+                N a m e                 Type
+
+atod . . . . . . . . . . . . . .	Proc
+atoi . . . . . . . . . . . . . .	Proc
+cross_product  . . . . . . . . .	Proc
+dot_product  . . . . . . . . . .	Proc
+dtoa . . . . . . . . . . . . . .	Proc
+getCoord . . . . . . . . . . . .	Proc
+get_and_display  . . . . . . . .	Proc
+inputD . . . . . . . . . . . . .	Proc
+inputW . . . . . . . . . . . . .	Proc
+input  . . . . . . . . . . . . .	Proc
+itoa . . . . . . . . . . . . . .	Proc
+outputD  . . . . . . . . . . . .	Proc
+outputW  . . . . . . . . . . . .	Proc
+output . . . . . . . . . . . . .	Proc
+point_subtract . . . . . . . . .	Proc
+point_vector_add . . . . . . . .	Proc
+printNormPoint . . . . . . . . .	Proc
+printPoint . . . . . . . . . . .	Proc
+sqrt . . . . . . . . . . . . . .	Proc
+vector_length  . . . . . . . . .	Proc
+
+
+Segments and Groups:
+
+                N a m e                 Size     Length   Align   Combine Class
+
+FLAT . . . . . . . . . . . . . .	GROUP
+STACK  . . . . . . . . . . . . .	32 Bit	 00001000 DWord	  Stack	  'STACK'	 
+_DATA  . . . . . . . . . . . . .	32 Bit	 00000254 DWord	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 00000B0E DWord	  Public  'CODE'	
+
+
+Procedures,  parameters and locals:
+
+                N a m e                 Type     Value    Attr
+
+$$$00001 . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000B0E Private
+ExitProcess  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+
+
+Symbols:
+
+                N a m e                 Type     Value    Attr
+
+@CodeSize  . . . . . . . . . . .	Number	 00000000h   
+@DataSize  . . . . . . . . . . .	Number	 00000000h   
+@Interface . . . . . . . . . . .	Number	 00000000h   
+@Model . . . . . . . . . . . . .	Number	 00000007h   
+@code  . . . . . . . . . . . . .	Text   	 _TEXT
+@data  . . . . . . . . . . . . .	Text   	 FLAT
+@fardata?  . . . . . . . . . . .	Text   	 FLAT
+@fardata . . . . . . . . . . . .	Text   	 FLAT
+@stack . . . . . . . . . . . . .	Text   	 FLAT
+CR . . . . . . . . . . . . . . .	Number	 0000000Dh   
+LF . . . . . . . . . . . . . . .	Number	 0000000Ah   
+_start . . . . . . . . . . . . .	L Near	 00000000 _TEXT	Public
+at_x . . . . . . . . . . . . . .	Word	 00000016 _DATA	
+at_y . . . . . . . . . . . . . .	Word	 00000018 _DATA	
+at_z . . . . . . . . . . . . . .	Word	 0000001A _DATA	
+atodproc . . . . . . . . . . . .	L Near	 00000000 FLAT	External
+atoiproc . . . . . . . . . . . .	L Near	 00000000 FLAT	External
+atxprompt  . . . . . . . . . . .	Byte	 000000C7 _DATA	
+atyprompt  . . . . . . . . . . .	Byte	 000000FD _DATA	
+atzprompt  . . . . . . . . . . .	Byte	 00000133 _DATA	
+carriage . . . . . . . . . . . .	Byte	 00000000 _DATA	
+display  . . . . . . . . . . . .	Byte	 00000208 _DATA	
+dtoaproc . . . . . . . . . . . .	L Near	 00000000 FLAT	External
+eol  . . . . . . . . . . . . . .	Byte	 00000247 _DATA	
+eye_x  . . . . . . . . . . . . .	Word	 00000010 _DATA	
+eye_y  . . . . . . . . . . . . .	Word	 00000012 _DATA	
+eye_z  . . . . . . . . . . . . .	Word	 00000014 _DATA	
+eyexprompt . . . . . . . . . . .	Byte	 00000034 _DATA	
+eyeyprompt . . . . . . . . . . .	Byte	 00000065 _DATA	
+eyezprompt . . . . . . . . . . .	Byte	 00000096 _DATA	
+inproc . . . . . . . . . . . . .	L Near	 00000000 FLAT	External
+itoaproc . . . . . . . . . . . .	L Near	 00000000 FLAT	External
+length_n . . . . . . . . . . . .	Word	 0000024E _DATA	
+length_u . . . . . . . . . . . .	Word	 00000250 _DATA	
+length_v . . . . . . . . . . . .	Word	 00000252 _DATA	
+n_x  . . . . . . . . . . . . . .	Word	 00000022 _DATA	
+n_y  . . . . . . . . . . . . . .	Word	 00000024 _DATA	
+n_z  . . . . . . . . . . . . . .	Word	 00000026 _DATA	
+ndotn  . . . . . . . . . . . . .	Word	 0000024A _DATA	
+outproc  . . . . . . . . . . . .	L Near	 00000000 FLAT	External
+output_n . . . . . . . . . . . .	Byte	 00000243 _DATA	
+output_u . . . . . . . . . . . .	Byte	 0000023B _DATA	
+output_v . . . . . . . . . . . .	Byte	 0000023F _DATA	
+sqrt_proc  . . . . . . . . . . .	L Near	 00000000 FLAT	External
+text . . . . . . . . . . . . . .	Byte	 00000003 _DATA	
+u_x  . . . . . . . . . . . . . .	Word	 0000002E _DATA	
+u_y  . . . . . . . . . . . . . .	Word	 00000030 _DATA	
+u_z  . . . . . . . . . . . . . .	Word	 00000032 _DATA	
+up_x . . . . . . . . . . . . . .	Word	 0000001C _DATA	
+up_y . . . . . . . . . . . . . .	Word	 0000001E _DATA	
+up_z . . . . . . . . . . . . . .	Word	 00000020 _DATA	
+upxprompt  . . . . . . . . . . .	Byte	 00000169 _DATA	
+upyprompt  . . . . . . . . . . .	Byte	 0000019E _DATA	
+upzprompt  . . . . . . . . . . .	Byte	 000001D3 _DATA	
+v_x  . . . . . . . . . . . . . .	Word	 00000028 _DATA	
+v_y  . . . . . . . . . . . . . .	Word	 0000002A _DATA	
+v_z  . . . . . . . . . . . . . .	Word	 0000002C _DATA	
+vupn . . . . . . . . . . . . . .	Word	 0000024C _DATA	
+
+	   0 Warnings
+	   0 Errors
