@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+    ],
+    "settings": {
+        "makefile.extensionOutputFolder": "./.vscode",
+        "makefile.launchConfigurations": [
+            {
+                "cwd": "/home/mrogers/src/os_coop",
+                "binaryPath": "../../../../bin/make",
+                "binaryArgs": ["run"]
+            }
+        ]
+    }
+}
